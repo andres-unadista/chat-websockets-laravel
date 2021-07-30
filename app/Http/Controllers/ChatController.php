@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Chat;
 use App\User;
+
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ChatController extends Controller
 {
@@ -18,6 +21,23 @@ class ChatController extends Controller
         abort_unless($chat->users->contains(auth()->id()), 403, 'No autorizado');
         return view('chat.view_chat', [
             'chat' => $chat
+        ]);
+    }
+
+    public function getMessages(Chat $chat)
+    {
+        $messages = $chat->messages()->with('user')->get();
+
+        return response()->json([
+            'messages' => $messages
+        ]);
+    }
+
+    public function getUsers(Chat $chat): JsonResponse
+    {
+        $users = $chat->users;
+        return response()->json([
+            'users' => $users
         ]);
     }
 

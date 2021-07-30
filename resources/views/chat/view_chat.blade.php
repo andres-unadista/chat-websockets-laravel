@@ -17,12 +17,12 @@
         <header class="msger-header">
             <div class="msger-header-title">
                 <i class="fas fa-comment-alt"></i> SimpleChat
-                <span class="chatWith"></span>
+                <span class="chatWith mx-2 "></span>
                 <span class="typing" style="display: none;"> está escribiendo</span>
             </div>
 
             <div class="msger-header-options">
-                <span><i class="fas fa-cog"></i></span>
+                <span class="chatStatus offline"><i class="fa fa-cog" aria-hidden="true"></i></span>
             </div>
         </header>
 
@@ -31,7 +31,7 @@
         </main>
 
         <form class="msger-inputarea">
-            <input type="text" class="msger-input" placeholder="Enter your message...">
+            <input type="text" class="msger-input" oninput="sendTypingEvent()" placeholder="Enter your message...">
             <button type="submit" class="msger-send-btn">Send</button>
         </form>
     </section>

@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
+use App\Events\MessageEvent;
+use Illuminate\Support\Facades\Log;
+
 class MessageController extends Controller
 {
     public function __construct()
@@ -17,8 +20,10 @@ class MessageController extends Controller
         $message = auth()->user()->messages()->create([
             'content' => $request->message,
             'chat_id' => $request->chat_id
-        ]);
+        ])->load('user');
 
-        return response()->json(['message' => $message, 'user' => auth()->user()]);
+        broadcast(new MessageEvent($message))->toOthers();
+
+        return response()->json(['message' => $message]);
     }
 }

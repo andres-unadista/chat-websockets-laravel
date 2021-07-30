@@ -21,8 +21,18 @@ Route::get('/', function () {
 });
 
 Route::prefix('chat')->group(function () {
-    Route::get('/with/{user}', [ChatController::class, 'with'])->name('chat.with');
     Route::get('/{chat}', [ChatController::class, 'show'])->name('chat.show');
+    Route::get('/{chat}/get-messages', [ChatController::class, 'getMessages'])->name('chat.get_messages');
+    Route::get('/{chat}/get-users', [ChatController::class, 'getUsers'])->name('chat.get_users');
+    Route::get('/with/{user}', [ChatController::class, 'with'])->name('chat.with');
+});
+
+Route::get('/auth/user', function(){
+    if(auth()->check())
+        return response()->json([
+            'user' => auth()->user()
+        ]);
+    return null;
 });
 
 Route::post('/message/sent', [MessageController::class, 'sent']);

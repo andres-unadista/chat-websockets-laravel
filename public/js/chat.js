@@ -5,6 +5,27 @@ const PERSON_IMG = "https://image.flaticon.com/icons/svg/145/145867.svg";
 const chatWith = get(".chatWith");
 const chatStatus = get(".chatStatus");
 const typing = get(".typing");
+const chatId = window.location.pathname.substr(6);
+let authUser;
+let typingTimer = false;
+
+window.onload = function() {
+    axios
+        .get("/auth/user")
+        .then(resp => {
+            authUser = resp.data.user;
+        })
+        .then(() => {
+            getAuthUsers();
+        })
+        .then(() => {
+            getMessages();
+        })
+        .then(() => {
+            echo();
+        })
+        .catch(err => console.log(err));
+};
 
 msgerForm.addEventListener("submit", event => {
     event.preventDefault();
@@ -17,13 +38,12 @@ msgerForm.addEventListener("submit", event => {
     axios
         .post("/message/sent", {
             message: msgText,
-            chat_id: 1 // TODO: id del chat
+            chat_id: chatId
         })
         .then(resp => {
-            console.log(resp.data);
             let data = resp.data;
             appendMessage(
-                data.user.name,
+                data.message.user.name,
                 PERSON_IMG,
                 "right",
                 data.message.content,
@@ -35,6 +55,40 @@ msgerForm.addEventListener("submit", event => {
         });
     msgerInput.value = "";
 });
+
+/* GET */
+
+function getAuthUsers() {
+    axios
+        .get(`/chat/${chatId}/get-users`)
+        .then(resp => {
+            let results = resp.data.users.filter(
+                user => user.id != authUser.id
+            );
+
+            if (results.length > 0) {
+                let i = 0;
+                for (let user of results) {
+                    chatWith.innerHTML =
+                        i !== 0 ? chatWith.innerHTML + user.name : user.name;
+                    i++;
+                }
+            }
+        })
+        .catch(err => console.error(err));
+}
+
+function getMessages() {
+    axios
+        .get(`/chat/${chatId}/get-messages`)
+        .then(resp => {
+            const messages = resp.data.messages;
+            if (messages.length > 0) {
+                appendMessages(messages);
+            }
+        })
+        .catch(err => console.log(err));
+}
 
 function appendMessage(name, img, side, text, date) {
     //   Simple solution for small apps
@@ -54,7 +108,54 @@ function appendMessage(name, img, side, text, date) {
   `;
 
     msgerChat.insertAdjacentHTML("beforeend", msgHTML);
-    msgerChat.scrollTop += 500;
+    bottomScroll();
+}
+
+function sendTypingEvent() {
+    typingTimer = true;
+    Echo.join(`chat.${chatId}`).whisper("typing", msgerInput.value.length);
+}
+
+// ECHO
+function echo() {
+    Echo.join(`chat.${chatId}`)
+        .listen("MessageEvent", resp => {
+            let message = resp.message;
+            if (message.user_id != authUser.id) {
+                appendMessage(
+                    message.user.name,
+                    PERSON_IMG,
+                    "left",
+                    message.content,
+                    formatDate(new Date(message.created_at))
+                );
+            }
+        })
+        .here(users => {
+            let result = users.filter(user => stateUser(user));
+            if (result.length > 0) chatStatus.className = "chatStatus online";
+        })
+        .joining(user => {
+            if (stateUser(user)) {
+                chatStatus.className = "chatStatus online";
+            }
+        })
+        .leaving(user => {
+            if (stateUser(user)) {
+                chatStatus.className = "chatStatus offline";
+            }
+        })
+        .listenForWhisper("typing", messageLength => {
+            if (messageLength > 0) typing.style.display = "";
+
+            if (typingTimer) {
+                clearTimeout(typingTimer);
+            }
+
+            typingTimer = setTimeout(() => {
+                typing.style.display = "none";
+            }, 2500);
+        });
 }
 
 // Utils
@@ -69,4 +170,27 @@ function formatDate(date) {
     const h = "0" + date.getHours();
     const m = "0" + date.getMinutes();
     return `${d}/${mo}/${y} ${h.slice(-2)}:${m.slice(-2)}`;
+}
+
+function appendMessages(messages) {
+    let side;
+
+    messages.forEach(message => {
+        side = message.user_id == authUser.id ? "right" : "left";
+        appendMessage(
+            message.user.name,
+            PERSON_IMG,
+            side,
+            message.content,
+            formatDate(new Date(message.created_at))
+        );
+    });
+}
+
+function bottomScroll() {
+    msgerChat.scrollTop = msgerChat.scrollHeight;
+}
+
+function stateUser(user) {
+    return user.id != authUser.id;
 }
