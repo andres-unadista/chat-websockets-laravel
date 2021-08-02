@@ -12,8 +12,12 @@
 </head>
 
 <body>
-
     <section class="msger">
+        <div style="display: block;">
+            <a href="{{ URL::previous() }}" style="padding: 1em; font-size: 20px;">
+                <i class="fa fa-arrow-left" aria-hidden="true"></i>
+            </a>
+        </div>
         <header class="msger-header">
             <div class="msger-header-title">
                 <i class="fas fa-comment-alt"></i> SimpleChat
@@ -32,6 +36,7 @@
 
         <form class="msger-inputarea">
             <input type="text" class="msger-input" oninput="sendTypingEvent()" placeholder="Enter your message...">
+            <input type="hidden" name="text" id="chatImage" value="{{Auth::user()->image}}">
             <button type="submit" class="msger-send-btn">Send</button>
         </form>
     </section>

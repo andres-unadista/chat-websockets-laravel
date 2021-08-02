@@ -26,7 +26,6 @@ window.onload = function() {
         })
         .catch(err => console.log(err));
 };
-
 msgerForm.addEventListener("submit", event => {
     event.preventDefault();
 
@@ -44,7 +43,7 @@ msgerForm.addEventListener("submit", event => {
             let data = resp.data;
             appendMessage(
                 data.message.user.name,
-                PERSON_IMG,
+                document.getElementById('chatImage').value,
                 "right",
                 data.message.content,
                 formatDate(new Date(data.message.created_at))
@@ -83,6 +82,7 @@ function getMessages() {
         .get(`/chat/${chatId}/get-messages`)
         .then(resp => {
             const messages = resp.data.messages;
+            console.log(messages);
             if (messages.length > 0) {
                 appendMessages(messages);
             }
@@ -92,9 +92,11 @@ function getMessages() {
 
 function appendMessage(name, img, side, text, date) {
     //   Simple solution for small apps
+    console.log(img);
+
     const msgHTML = `
     <div class="msg ${side}-msg">
-      <div class="msg-img" style="background-image: url(${img})"></div>
+      <div class="msg-img" style="background-image: url(/storage/${img}), url(${PERSON_IMG})"></div>
 
       <div class="msg-bubble">
         <div class="msg-info">
@@ -124,7 +126,7 @@ function echo() {
             if (message.user_id != authUser.id) {
                 appendMessage(
                     message.user.name,
-                    PERSON_IMG,
+                    message.user.image,
                     "left",
                     message.content,
                     formatDate(new Date(message.created_at))
@@ -179,7 +181,7 @@ function appendMessages(messages) {
         side = message.user_id == authUser.id ? "right" : "left";
         appendMessage(
             message.user.name,
-            PERSON_IMG,
+            message.user.image,
             side,
             message.content,
             formatDate(new Date(message.created_at))
@@ -194,3 +196,4 @@ function bottomScroll() {
 function stateUser(user) {
     return user.id != authUser.id;
 }
+
